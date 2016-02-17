@@ -17,6 +17,7 @@ public class PlayerChatListener implements Listener {
 		String nospaceAfter = "(?!\\s|$|^)";
 		String spaceAfter = "(?=\\s|^|$)";
 		String nonJoinerRegex = "(?<!\\s|^|$|[" + nonJoinerLetters + "])";
+		String isnonJoinerRegex = "(?<=\\s|^|$|[" + nonJoinerLetters + "])";
 		String JoinerRegex = "(?<!\\s\\w[^" + nonJoinerLetters + "])";
 		RULES.add(new Rule(nonJoinerRegex + "ا", "ﺎ"));
 		RULES.add(new Rule(nonJoinerRegex + "ب" + nospaceAfter, "ﺒ"));
@@ -97,6 +98,7 @@ public class PlayerChatListener implements Listener {
 		RULES.add(new Rule(nonJoinerRegex + "ه" + nospaceAfter, "ﻬ"));
 		RULES.add(new Rule(JoinerRegex + "ه" + nospaceAfter, "ﻫ"));
 		RULES.add(new Rule(nonJoinerRegex + "ه" + spaceAfter, "ﻪ"));
+		RULES.add(new Rule(isnonJoinerRegex + "ه" + spaceAfter, "ﮦ"));
 		RULES.add(new Rule(nonJoinerRegex + "ی" + nospaceAfter, "ﻴ"));
 		RULES.add(new Rule(JoinerRegex + "ی" + nospaceAfter, "ﻳ"));
 		RULES.add(new Rule(nonJoinerRegex + "ی" + spaceAfter, "ﻰ"));
@@ -104,26 +106,25 @@ public class PlayerChatListener implements Listener {
 
 	@EventHandler
 	public void playerChat(ChatEvent e) {
-		ProxiedPlayer player;
 		if ((e.getSender() instanceof ProxiedPlayer)) {
+			ProxiedPlayer player;
 			player = (ProxiedPlayer) e.getSender();
-			if (!player.hasPermission("PFF.nofilter")) {
-				String message = e.getMessage();
-				if (message.matches("^[\u0600-\u06FF\uFB8A\u067E\u0686\u06AF ]+$")) {
-					for (Rule nrule : RULES) {
-						Matcher m = nrule.regex.matcher(message);
-						while (m.find()) {
-							message = m.replaceAll(nrule.replacerchar);
-						}
-					}
 
-					StringBuilder Reversed = new StringBuilder();
-					char[] MessageArray = message.toCharArray();
-					for (int i = message.toCharArray().length - 1; i >= 0; i--) {
-						Reversed.append(MessageArray[i]);
+			String message = e.getMessage();
+			if (message.matches("^[\u0600-\u06FF\uFB8A\u067E\u0686\u06AF ]+$")) {
+				for (Rule nrule : RULES) {
+					Matcher m = nrule.regex.matcher(message);
+					while (m.find()) {
+						message = m.replaceAll(nrule.replacerchar);
 					}
-					e.setMessage(Reversed.toString());
 				}
+
+				StringBuilder Reversed = new StringBuilder();
+				char[] MessageArray = message.toCharArray();
+				for (int i = message.toCharArray().length - 1; i >= 0; i--) {
+					Reversed.append(MessageArray[i]);
+				}
+				e.setMessage(Reversed.toString());
 			}
 		}
 	}
