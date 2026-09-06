@@ -113,4 +113,4 @@ letter table to keep in sync.
 
 ## License
 
-GPLv3.
+GNU Affero General Public License v3.0 only (`AGPL-3.0-only`). See [LICENSE](LICENSE).
