@@ -16,7 +16,7 @@ import io.github.jd1378.persianfontfixer.rtl.RtlText;
  * Velocity has no per-viewer chat hook, and disconnects the player when a plugin changes a
  * signed 1.19.1+ message (SessionChatHandler#invalidChange), hence the protocol version guard.
  */
-@Plugin(id = "persianfontfixer", name = "PersianFontFixer", version = "2.0.0", authors = {"Javad Mnjd"},
+@Plugin(id = "persianfontfixer", name = "PersianFontFixer", version = "2.0.1", authors = {"Javad Mnjd"},
         description = "Shapes and reorders Persian and Arabic chat at the proxy for clients up to 1.19. Do not combine with the backend plugin.")
 public final class PersianFontFixerVelocity {
     private final Logger logger;
