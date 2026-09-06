@@ -3,29 +3,37 @@
 Shows Persian and Arabic chat correctly for Minecraft players whose client does not render
 right-to-left text.
 
-A Minecraft client with an English (or any left-to-right) language selected draws every
-character as a separate glyph, left to right. Persian and Arabic then appear as disconnected
-letters in reverse order. A client with Persian or Arabic selected shapes and reorders the text
-itself, so any server-side "fix" would be applied twice and come out backwards.
+Minecraft clients **older than 1.16.2** draw every character as a separate glyph, left to
+right, unless the selected language is itself right-to-left. Persian and Arabic then appear as
+disconnected letters in reverse order. Since 1.16.2 (snapshot 20w30a, [MC-35765]) the client
+shapes and reorders Arabic script in every language, so those clients must get the text
+untouched; anything pre-shaped would be reordered a second time.
 
 This plugin therefore decides **per player**:
 
 | viewer | receives |
 | --- | --- |
-| client language is Persian or Arabic | the message untouched |
-| any other client language | the message shaped (joined letters) and reordered for a left-to-right renderer |
+| client 1.16.2 or newer | the message untouched (the client renders it correctly itself) |
+| older client, language Persian or Arabic | the message untouched (the client's own right-to-left mode) |
+| older client, any other language | the message shaped (joined letters) and reordered for a left-to-right renderer |
 | console and log | the message untouched |
 
 ```
-typed          سلام دنیا
-English client without this plugin   ﺱ ﻝ ﺍ ﻡ  ﺩ ﻥ ﯼ ﺍ    disconnected, reversed
-English client with this plugin      ﺎﯿﻧﺩ ﻡﻼﺳ            joined, right to left
-Persian client, with or without      سلام دنیا           (its own renderer)
+typed                                   سلام دنیا
+old English client without this plugin  ﺱ ﻝ ﺍ ﻡ  ﺩ ﻥ ﯼ ﺍ    disconnected, reversed
+old English client with this plugin     ﺎﯿﻧﺩ ﻡﻼﺳ            joined, right to left
+1.16.2+ or Persian client               سلام دنیا           (its own renderer)
 ```
 
 Mixed lines work too: `hello سلام دنیا` keeps the Latin part in place and reorders only the
 Arabic-script runs. Digits keep their order, brackets are mirrored inside right-to-left runs,
 and combining marks stay on their letter.
+
+The client version comes from ViaVersion when installed (exact per-player version on
+multi-version servers), else from Paper's `Player#getProtocolVersion`, else clients are assumed
+to match the server. `assume-clients` in the config overrides detection.
+
+[MC-35765]: https://bugs.mojang.com/browse/MC-35765
 
 ## Compatibility
 
@@ -36,25 +44,24 @@ One jar for every server version:
 | Paper 1.16.5 and newer | `AsyncChatEvent` with a per-viewer `ChatRenderer` | kept; clients that need the fix see the message flagged as "Modified" |
 | Spigot / Bukkit, or Paper without the Adventure chat API | `AsyncPlayerChatEvent`, recipients split by hand | kept for untouched viewers; fixed viewers get an unsigned system message |
 
-Java 8 bytecode, `api-version: 1.13`, no dependencies (ProtocolLib is no longer needed).
-Verified with bots on Paper 1.21.4 (Java 21), 1.16.5 and 1.12.2 (Java 8).
+Java 8 bytecode, `api-version: 1.13`, no dependencies (ProtocolLib is no longer needed;
+ViaVersion is used when present). Verified with bots on Paper 1.8.8, 1.12.2, 1.16.5 (Java 8),
+1.21.4 (Java 21) including 1.12.2 clients joining 1.21.4 through ViaVersion, and loaded on 26.2.
 
 ## Proxy jars (BungeeCord, Velocity)
 
-`PersianFontFixer-bungee.jar` and `PersianFontFixer-velocity.jar` exist for setups that want
-one install on the proxy instead of one per backend. They use the old design, because proxy
-APIs offer nothing better:
-
-- the sender's message is rewritten once, so **every** viewer gets the visual form, including
-  clients with Persian or Arabic selected, who then see it reversed;
-- 1.19.1+ clients are skipped entirely: BungeeCord ignores the change and forwards the original,
-  Velocity disconnects the player for changing a signed message. Those players see raw text.
+`PersianFontFixer-bungee.jar` and `PersianFontFixer-velocity.jar` exist for networks where
+**every client is older than 1.16.2** and one install on the proxy is preferred. They use the
+old design, because proxy APIs offer nothing better: the sender's message is rewritten once,
+so every viewer gets the visual form, Persian-language clients included. Messages from 1.16.2+
+senders are left alone. On a mixed-version network some viewers will always see the wrong
+form, so use the backend jar there.
 
 Prefer the backend jar. It works behind either proxy unchanged, per player, on every version.
 **Never run a proxy jar and the backend jar together**: the already shaped text would be
 shaped and reversed a second time.
 
-Verified with bots: both proxies rewrite on 1.18.2 and leave 1.21.4 signed chat untouched.
+Verified with bots: both proxies rewrite for 1.12.2 clients and leave 1.18.2 clients untouched.
 
 ## Configuration
 
@@ -63,7 +70,8 @@ Verified with bots: both proxies rewrite on 1.18.2 and leave 1.21.4 signed chat 
 ```yaml
 listener: auto        # auto | paper | bukkit
 debug: false          # log every chat decision
-rtl-locales: [fa, ar] # client languages whose renderer already handles right-to-left text
+assume-clients: auto  # auto | legacy | modern  (override client version detection)
+rtl-locales: [fa, ar] # languages whose renderer handles right-to-left text on old clients
 ```
 
 ## Building and testing (Docker only, nothing installed on the host)
@@ -81,6 +89,11 @@ docker compose run --rm bot
 
 # other server versions: MC_JAVA picks the itzg image (java21 / java17 / java16 / java8)
 MC_VERSION=1.16.5 MC_JAVA=java8 docker compose up -d --build mc
+
+# multi-version: ViaVersion on the server, bots joining as another client version
+MC_PLUGINS=viaversion,viabackwards docker compose up -d --build mc
+CLIENT_VERSION=1.12.2 docker compose run --rm -e EXPECT=backend bot
+CLIENT_VERSION=1.21.4 docker compose run --rm -e EXPECT=untouched bot
 
 docker compose down -v
 

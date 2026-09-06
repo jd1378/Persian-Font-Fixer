@@ -33,6 +33,8 @@ services:
       OVERRIDE_SERVER_PROPERTIES: "true"
       # -1 disables packet compression so traffic can be inspected with tcpdump (MC_COMPRESSION=-1)
       NETWORK_COMPRESSION_THRESHOLD: ${MC_COMPRESSION:-256}
+      # e.g. MC_PLUGINS=viaversion,viabackwards to let bots of other client versions join
+      MODRINTH_PROJECTS: ${MC_PLUGINS:-}
     volumes:
       - mc-data:/data
     ports:
@@ -44,7 +46,8 @@ services:
     build: ./docker/bot
     environment:
       MC_HOST: mc
-      MC_VERSION: ${MC_VERSION:-1.21.4}
+      # client version the bots pretend to be; defaults to the server version
+      MC_VERSION: ${CLIENT_VERSION:-${MC_VERSION:-1.21.4}}
     depends_on:
       mc:
         condition: service_healthy

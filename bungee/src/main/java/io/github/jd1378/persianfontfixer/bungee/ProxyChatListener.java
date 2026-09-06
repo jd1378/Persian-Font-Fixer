@@ -8,13 +8,15 @@ import net.md_5.bungee.event.EventHandler;
 import io.github.jd1378.persianfontfixer.rtl.RtlText;
 
 /**
- * Proxy-side fix, legacy design: the sender's message is rewritten once, so every viewer
- * (including clients that render right-to-left text themselves) gets the visual form.
- * BungeeCord has no per-viewer chat hook, and silently drops changes to 1.19.1+ signed chat.
+ * Proxy-side fix, legacy design: the sender's message is rewritten once, so every viewer gets
+ * the visual form. Only right for networks where all clients are older than 1.16.2; from that
+ * version on the client shapes and reorders Arabic script itself (MC-35765) and would reverse
+ * the visual form again. Messages from such senders are left alone. The sender's own language
+ * is irrelevant: what matters is the viewers', and BungeeCord has no per-viewer chat hook.
  */
 public final class ProxyChatListener implements Listener {
-    /** Protocol version of Minecraft 1.19.1, the first with signed chat the proxy cannot alter. */
-    static final int SIGNED_CHAT_PROTOCOL = 760;
+    /** Protocol number of Minecraft 1.16.2, the first client that renders Arabic script itself. */
+    static final int SELF_RENDERING_PROTOCOL = 751;
 
     @EventHandler
     public void onChat(ChatEvent event) {
@@ -22,7 +24,7 @@ public final class ProxyChatListener implements Listener {
             return;
         }
         ProxiedPlayer player = (ProxiedPlayer) event.getSender();
-        if (player.getPendingConnection().getVersion() >= SIGNED_CHAT_PROTOCOL) {
+        if (player.getPendingConnection().getVersion() >= SELF_RENDERING_PROTOCOL) {
             return;
         }
         String message = event.getMessage();

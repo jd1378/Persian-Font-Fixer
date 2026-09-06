@@ -17,16 +17,17 @@ import io.github.jd1378.persianfontfixer.rtl.RtlText;
  * Fallback for servers without Paper's per-viewer renderer.
  *
  * The event carries one message for every recipient, so the split is done by hand: the
- * message stays untouched for the console and for clients that render right-to-left text
- * themselves, and the remaining players are removed from the recipients and sent the
- * visual form directly. On 1.19.1+ the untouched message keeps its chat signature.
+ * message stays untouched for the console and for clients that render Arabic script
+ * themselves (1.16.2+, or a right-to-left language), and the remaining players are removed
+ * from the recipients and sent the visual form directly. On 1.19.1+ the untouched message
+ * keeps its chat signature.
  */
 final class BukkitChatListener implements Listener {
-    private final ViewerLocales locales;
+    private final Viewers viewers;
     private final Logger debug;
 
-    BukkitChatListener(ViewerLocales locales, Logger debug) {
-        this.locales = locales;
+    BukkitChatListener(Viewers viewers, Logger debug) {
+        this.viewers = viewers;
         this.debug = debug;
     }
 
@@ -39,7 +40,7 @@ final class BukkitChatListener implements Listener {
         Set<Player> recipients = event.getRecipients();
         List<Player> needsFix = new ArrayList<Player>();
         for (Player viewer : recipients) {
-            if (!locales.rendersRtl(viewer)) {
+            if (viewers.needsVisualForm(viewer)) {
                 needsFix.add(viewer);
             }
         }

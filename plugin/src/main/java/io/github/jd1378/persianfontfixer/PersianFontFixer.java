@@ -12,19 +12,32 @@ public final class PersianFontFixer extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        ViewerLocales locales = new ViewerLocales(getConfig().getStringList("rtl-locales"));
+        Viewers viewers = new Viewers(
+                new ClientVersions(getConfig().getString("assume-clients", "auto"), getLogger()),
+                new ViewerLocales(getConfig().getStringList("rtl-locales")));
 
         String mode = getConfig().getString("listener", "auto").toLowerCase(Locale.ROOT);
-        boolean paper = mode.equals("paper") || (mode.equals("auto") && hasClass(PAPER_CHAT_EVENT));
-        if (paper && !hasClass(PAPER_CHAT_EVENT)) {
+        boolean paperApi = hasClass(PAPER_CHAT_EVENT);
+        if (mode.equals("paper") && !paperApi) {
             getLogger().severe("listener: paper requested but this server has no Paper chat API; disabling.");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-
         // The Paper listener class is only loaded after the check, so Spigot never sees its imports.
+        // Adventure differs across the Paper builds this plugin supports, so prove the transform works first.
+        boolean paper = !mode.equals("bukkit") && paperApi;
+        if (paper && !PaperChatListener.selfTest()) {
+            if (mode.equals("paper")) {
+                getLogger().severe("listener: paper requested but this server's Adventure cannot run the transform; disabling.");
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+            getLogger().warning("This server's Adventure cannot run the per-viewer transform; using the Bukkit chat event instead.");
+            paper = false;
+        }
+
         Logger debug = getConfig().getBoolean("debug", false) ? getLogger() : null;
-        Listener listener = paper ? new PaperChatListener(locales, debug) : new BukkitChatListener(locales, debug);
+        Listener listener = paper ? new PaperChatListener(viewers, getLogger(), debug) : new BukkitChatListener(viewers, debug);
         getServer().getPluginManager().registerEvents(listener, this);
         getLogger().info("Using " + (paper ? "Paper per-viewer renderer" : "Bukkit chat event"));
     }
