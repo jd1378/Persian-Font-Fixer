@@ -1,0 +1,4 @@
+.git
+**/target
+docker/bot
+README.md

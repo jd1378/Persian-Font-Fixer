@@ -1,0 +1,17 @@
+# Minimal Velocity config for the end-to-end test: one backend, offline mode.
+config-version = "2.7"
+bind = "0.0.0.0:25565"
+online-mode = false
+player-info-forwarding-mode = "none"
+forwarding-secret-file = "forwarding.secret"
+
+[servers]
+lobby = "mc-plain:25565"
+try = ["lobby"]
+
+[forced-hosts]
+
+[advanced]
+
+[query]
+enabled = false

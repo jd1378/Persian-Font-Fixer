@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.jd1378.persianfontfixer</groupId>
+        <artifactId>persian-font-fixer-parent</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <artifactId>persian-font-fixer-core</artifactId>
+    <name>Persian Font Fixer Core</name>
+    <description>Arabic-script shaping and bidi reordering for renderers that do neither. No Bukkit dependency.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

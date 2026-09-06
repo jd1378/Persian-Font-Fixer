@@ -1,0 +1,48 @@
+name: Release jar
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag (and release) to upload the jar to
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Same Dockerfile as local development: compiles, runs the unit tests, exports the jar.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: artifact
+          outputs: type=local,dest=out
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload jars to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${TAG#v}"
+          mv out/PersianFontFixer.jar "out/PersianFontFixer-$v.jar"
+          mv out/PersianFontFixer-bungee.jar "out/PersianFontFixer-bungee-$v.jar"
+          mv out/PersianFontFixer-velocity.jar "out/PersianFontFixer-velocity-$v.jar"
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --generate-notes
+          fi
+          gh release upload "$TAG" out/*.jar --repo "$GITHUB_REPOSITORY" --clobber

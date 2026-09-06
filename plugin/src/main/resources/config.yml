@@ -1,0 +1,16 @@
+# Which chat event to hook.
+#   auto   - Paper's per-viewer chat renderer when available, otherwise the Bukkit event.
+#   paper  - force the Paper renderer (fails to enable on Spigot).
+#   bukkit - force the Bukkit event even on Paper (useful for testing that path).
+listener: auto
+
+# Log every chat decision (which viewers get the visual form). Noisy; for troubleshooting only.
+debug: false
+
+# Client languages that already draw right-to-left text correctly (Minecraft marks them
+# "bidirectional"). Players using one of these receive the message untouched; everyone else
+# receives the shaped and reordered form. Match on the language part of the locale, so
+# "fa" covers fa_ir, fa_IR and any other Persian variant.
+rtl-locales:
+  - fa
+  - ar

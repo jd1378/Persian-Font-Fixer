@@ -1,0 +1,8 @@
+{
+  "name": "persian-font-fixer-bot",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "mineflayer": "^4.25.0"
+  }
+}

@@ -1,0 +1,97 @@
+# Everything runs in containers; nothing is installed on the host and no bind mounts are needed.
+#
+#   docker build --target artifact -o out .    compile, run unit tests, write out/PersianFontFixer.jar
+#   docker compose up -d --build mc            Paper server with the plugin baked in (offline mode, for bots)
+#   docker compose run --rm bot            two mineflayer bots (en_us, fa_ir) exchange Persian chat and assert
+#
+# Proxy jars (legacy design, clients up to 1.19), backend without the plugin:
+#   MC_VERSION=1.18.2 MC_JAVA=java17 docker compose --profile proxy up -d --build proxy-bungee
+#   docker compose run --rm --no-deps -e MC_HOST=proxy-bungee -e MC_PORT=25577 -e EXPECT=legacy bot
+#   (same with proxy-velocity and MC_PORT=25565)
+#   docker compose logs -f mc              server console
+#   docker compose down -v                 stop and wipe server data
+#
+# MC_VERSION must be one both Paper and mineflayer support; MC_JAVA picks the itzg image tag
+# (java21 for 1.20.5+, java17 for 1.18 to 1.20.4, java16 for 1.17, java8 for older), e.g.
+#   MC_VERSION=1.16.5 MC_JAVA=java8 docker compose up -d --build mc
+
+services:
+  mc:
+    build:
+      context: .
+      target: server
+      args:
+        MC_IMAGE: itzg/minecraft-server:${MC_JAVA:-java21}
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: ${MC_VERSION:-1.21.4}
+      ONLINE_MODE: "FALSE"
+      MEMORY: 1G
+      SPAWN_MONSTERS: "false"
+      VIEW_DISTANCE: 2
+      OVERRIDE_SERVER_PROPERTIES: "true"
+      # -1 disables packet compression so traffic can be inspected with tcpdump (MC_COMPRESSION=-1)
+      NETWORK_COMPRESSION_THRESHOLD: ${MC_COMPRESSION:-256}
+    volumes:
+      - mc-data:/data
+    ports:
+      - "25565:25565"
+    stdin_open: true
+    tty: true
+
+  bot:
+    build: ./docker/bot
+    environment:
+      MC_HOST: mc
+      MC_VERSION: ${MC_VERSION:-1.21.4}
+    depends_on:
+      mc:
+        condition: service_healthy
+    profiles: [tools]
+
+  # --- proxy test: plain backend (no plugin) behind a proxy that carries the proxy jar
+  mc-plain:
+    image: itzg/minecraft-server:${MC_JAVA:-java21}
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: ${MC_VERSION:-1.21.4}
+      ONLINE_MODE: "FALSE"
+      MEMORY: 1G
+      SPAWN_MONSTERS: "false"
+      VIEW_DISTANCE: 2
+      OVERRIDE_SERVER_PROPERTIES: "true"
+    volumes:
+      - mc-plain-data:/data
+    profiles: [proxy]
+
+  proxy-bungee:
+    build:
+      context: .
+      target: proxy-bungee
+    environment:
+      TYPE: BUNGEECORD
+    depends_on:
+      mc-plain:
+        condition: service_healthy
+    ports:
+      - "25577:25577"
+    profiles: [proxy]
+
+  proxy-velocity:
+    build:
+      context: .
+      target: proxy-velocity
+    environment:
+      TYPE: VELOCITY
+    depends_on:
+      mc-plain:
+        condition: service_healthy
+    ports:
+      - "25566:25565"
+    profiles: [proxy]
+
+volumes:
+  mc-data:
+  mc-plain-data:

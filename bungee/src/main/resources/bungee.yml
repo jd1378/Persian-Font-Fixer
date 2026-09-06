@@ -1,0 +1,5 @@
+name: PersianFontFixer
+main: io.github.jd1378.persianfontfixer.bungee.PersianFontFixerBungee
+version: ${project.version}
+author: Javad Mnjd
+description: Shapes and reorders Persian and Arabic chat at the proxy for clients up to 1.19. Do not combine with the backend plugin.

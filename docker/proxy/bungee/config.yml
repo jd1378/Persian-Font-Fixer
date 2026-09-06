@@ -1,0 +1,13 @@
+# Minimal BungeeCord config for the end-to-end test: one backend, offline mode.
+listeners:
+- host: 0.0.0.0:25577
+  priorities: [lobby]
+  force_default_server: true
+  query_enabled: false
+  motd: PersianFontFixer test
+servers:
+  lobby:
+    address: mc-plain:25565
+    restricted: false
+online_mode: false
+ip_forward: false

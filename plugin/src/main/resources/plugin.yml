@@ -1,0 +1,6 @@
+name: PersianFontFixer
+main: io.github.jd1378.persianfontfixer.PersianFontFixer
+version: ${project.version}
+api-version: 1.13
+author: Javad Mnjd
+description: Shows Persian and Arabic chat correctly for players whose client does not render right-to-left text.
