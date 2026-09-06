@@ -43,6 +43,11 @@ final class PaperChatListener implements Listener {
         }
         final ChatRenderer inner = event.renderer();
         event.renderer(new ChatRenderer() {
+            // Viewer-unaware renderers return the same line object for every viewer, so the
+            // visual form is built once per message instead of once per viewer. One immutable
+            // pair in one field: a concurrent race can only cost a duplicate computation.
+            private Component[] last;
+
             @Override
             public Component render(Player source, Component sourceDisplayName, Component message, Audience viewer) {
                 Component line = inner.render(source, sourceDisplayName, message, viewer);
@@ -50,7 +55,16 @@ final class PaperChatListener implements Listener {
                 if (debug != null) {
                     debug.info("chat from " + source.getName() + " to " + viewer + ": " + (fix ? "visual form" : "untouched"));
                 }
-                return fix ? toVisual(line) : line;
+                return fix ? visualOf(line) : line;
+            }
+
+            private Component visualOf(Component line) {
+                Component[] pair = last;
+                if (pair == null || pair[0] != line) {
+                    pair = new Component[]{line, toVisual(line)};
+                    last = pair;
+                }
+                return pair[1];
             }
         });
     }
