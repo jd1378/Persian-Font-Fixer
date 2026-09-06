@@ -19,7 +19,7 @@ import io.github.jd1378.persianfontfixer.rtl.RtlText;
  * guard also keeps clear of 1.19.1+ signed chat, which Velocity disconnects a player for
  * changing (SessionChatHandler#invalidChange).
  */
-@Plugin(id = "persianfontfixer", name = "PersianFontFixer", version = "2.0.1", authors = {"Javad Mnjd"},
+@Plugin(id = "persianfontfixer", name = "PersianFontFixer", version = "2.1.0", authors = {"Javad Mnjd"},
         description = "Shapes and reorders Persian and Arabic chat at the proxy for clients up to 1.19. Do not combine with the backend plugin.")
 public final class PersianFontFixerVelocity {
     private final Logger logger;
